@@ -43,8 +43,7 @@ switch($e->name)
 	case 'OnLoadWebDocument':
 		$tbl_site_templates = $modx->getFullTableName('site_templates');
 		$template = $modx->documentObject['template'];
-		$sql = "SELECT templatename FROM {$tbl_site_templates} WHERE {$tbl_site_templates}.id = '{$template}'";
-		$result = $modx->db->query($sql);
+		$result = $modx->db->select('templatename', $tbl_site_templates, "id='{$template}'");
 		
 		if(!$modx->db->getRecordCount($result)) return;
 		
@@ -78,12 +77,11 @@ switch($e->name)
 		
 		// get templates 
 		$templates = implode(',', array_map(create_function('$a', 'return "\'$a\'";'), $parent_templates)); 
-		$sql = "SELECT content, templatename FROM {$tbl_site_templates} WHERE {$tbl_site_templates}.templatename";
 		
-		if (count($parent_templates)==1) $sql .= " = $templates";
-		else                             $sql .= " in ($templates)";
+		if (count($parent_templates)==1) $where = "templatename={$templates}";
+		else                             $where = "templatename in ({$templates})";
 		
-		$result = $modx->db->query($sql);
+		$result = $modx->db->select('content,templatename', $tbl_site_templates, $where);
 		if (!$modx->db->getRecordCount($result)) return;
 		
 		$template_name_to_content = array();
@@ -98,16 +96,15 @@ switch($e->name)
 		// prevent recursive replacement
 		$modx->documentContent = str_replace('[*content*]', CASCADING_TEMPLATES_CONTENT_REPLACEMENT, $modx->documentContent);
 		$push_documentObject_content = $modx->documentObject['content'];
-		$size_of_parent_templates = count($parent_templates);
-		for ($i=0; $i<$size_of_parent_templates; $i++)
+		foreach ($parent_templates as $parent_template)
 		{
-			if (!isset($template_name_to_content[$parent_templates[$i]])) continue;
+			if (!isset($template_name_to_content[$parent_template])) continue;
 			
 			// inner template
 			$modx->documentObject['content'] = $modx->documentContent;
 			
 			// merge inner template into outer template
-			$modx->documentContent = $modx->parseDocumentSource($template_name_to_content[$parent_templates[$i]]);
+			$modx->documentContent = $modx->parseDocumentSource($template_name_to_content[$parent_template]);
 		}
 		
 		$modx->documentObject['content'] = $push_documentObject_content;
