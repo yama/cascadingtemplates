@@ -33,7 +33,7 @@
 
 // Settings
 define (CASCADING_TEMPLATES_DELIMTER, $delim); // the delimiter
-define (CASCADING_TEMPLATES_CONTENT_REPLACEMENT, '#@#content#@#'); // replace [*content*]
+$spacer = md5($modx->config['site_url']);
 
 /* DO NOT EDIT BELOW UNLESS YOU KNOW WHAT YOU ARE DOING */
 
@@ -94,7 +94,9 @@ switch($e->name)
 		$parent_templates = array_reverse($parent_templates);
 		
 		// prevent recursive replacement
-		$modx->documentContent = str_replace('[*content*]', CASCADING_TEMPLATES_CONTENT_REPLACEMENT, $modx->documentContent);
+		$org = array('[*content*]','[*#content*]');
+		$tmp = "[{$spacer}*content*{$spacer}]";
+		$modx->documentContent = str_replace($org, $tmp, $modx->documentContent);
 		$push_documentObject_content = $modx->documentObject['content'];
 		foreach ($parent_templates as $parent_template)
 		{
@@ -108,7 +110,7 @@ switch($e->name)
 		}
 		
 		$modx->documentObject['content'] = $push_documentObject_content;
-		$modx->documentContent = str_replace(CASCADING_TEMPLATES_CONTENT_REPLACEMENT, '[*content*]', $modx->documentContent);
+		$modx->documentContent = str_replace($tmp, '[*content*]', $modx->documentContent);
 		return;
 	default:
 		return;
